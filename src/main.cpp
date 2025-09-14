@@ -2,38 +2,9 @@
 #include <string>
 #include <unordered_map>
 
+#include "Entity.h"
 #include "raylib.h"
 #include "raymath.h"
-
-enum class MovementPattern
-{
-    NONE,          // For the player or static objects
-    LINEAR,        // Moves in a straight line
-    SINE_WAVE,     // Moves in a sine wave pattern
-    TARGET_PLAYER  // Aims at the player's position at spawn time
-};
-
-struct Entity
-{
-    Rectangle trans = {0, 0, 32, 32};
-    std::string textureName = {"entity"};
-    Vector2 velocity = {0, 0};
-    int speedStat = 320;  // for player
-
-    bool isActive = true;  // for pooling
-    float lifetime = 0.0f;
-    MovementPattern movementPattern = MovementPattern::NONE;
-
-    float pattern_param1 = 0.0f;
-    float pattern_param2 = 0.0f;
-    Vector2 initialDirection = {0, 0};
-
-    std::string dump()
-    {
-        return "Entity(" + textureName + " @ " + std::to_string(velocity.x) + "," +
-               std::to_string(velocity.y) + ")";
-    }
-};
 
 struct Graphics
 {
@@ -64,19 +35,35 @@ struct Graphics
 struct GameState
 {
     Graphics gfx;
-    std::unordered_map<std::string, Entity> entities;
+    std::unordered_map<std::string, Entity> friendlyEnt;
+    std::unordered_map<std::string, Entity> enemyEnt;
 
-    float scrollPos = 0.0f;
-    float scrollSpeed = 120.0f;
+    double scrollPos = 0.0f;
+    double scrollSpeed = 1.0f;
 
     void onInit()
     {
         const int screenWidth = GetRenderWidth();
         const int screenHeight = GetRenderHeight();
-        entities.insert({"player", Entity{{0, 0, 124 / 1.5, 135 / 1.5}, "res/player.png"}});
-        auto& player = entities.find("player")->second;
+        friendlyEnt.insert({"player", Entity({0, 0, 124, 135}, "res/player.png", 320,
+                                             std::make_shared<LinearMovement>())});
+        auto& player = friendlyEnt.find("player")->second;
         player.trans.x = screenWidth / 2 - player.trans.width / 2;
         player.trans.y = screenHeight - player.trans.height - 20;
+
+        auto a = enemyEnt.insert({"asteroid1", Entity({100, -50, 96, 96}, "res/aster.png", 100,
+                                                      std::make_shared<LinearMovement>())});
+
+        a.first->second.velocity.y = 100;
+
+        a = enemyEnt.insert({"asteroid2", Entity({400, -50, 96, 96}, "res/aster.png", 100,
+                                                 std::make_shared<SineMovement>(100, 2, 0))});
+
+        a.first->second.velocity.y = 100;
+
+        a = enemyEnt.insert({"asteroid3", Entity({200, -50, 96, 96}, "res/aster.png.png", 150,
+                                              std::make_shared<TargetPlayerMovement>(
+                                                  Vector2{player.trans.x, player.trans.y}, 11))});
     }
 
     Vector2 getMovementVector()
@@ -84,13 +71,13 @@ struct GameState
         Vector2 movement;
         movement.x = 0;
         movement.y = 0;
-        if (IsKeyDown(KEY_KP_8))
+        if (IsKeyDown(KEY_UP))
             movement.y -= 1;
-        if (IsKeyDown(KEY_KP_5))
+        if (IsKeyDown(KEY_DOWN))
             movement.y += 1;
-        if (IsKeyDown(KEY_KP_4))
+        if (IsKeyDown(KEY_LEFT))
             movement.x -= 1;
-        if (IsKeyDown(KEY_KP_6))
+        if (IsKeyDown(KEY_RIGHT))
             movement.x += 1;
         return Vector2Normalize(movement);
     }
@@ -99,39 +86,53 @@ struct GameState
     {
         float delta = GetFrameTime();
 
-        auto playerIt = entities.find("player");
+        auto playerIt = friendlyEnt.find("player");
         Entity* player = nullptr;
-        if (playerIt != entities.end())
+        if (playerIt != friendlyEnt.end())
         {
             player = &playerIt->second;
         }
 
-        if (!player)
+        if (player)
         {
-            return;
+            Vector2 movement = getMovementVector();
+            auto speed = player->speedStat;
+            if (IsKeyDown(KEY_LEFT_SHIFT))
+            {
+                speed = speed / 2;
+            }
+
+            player->velocity.x = movement.x * speed;
+            player->velocity.y = movement.y * speed;
+
+            scrollPos += scrollSpeed * delta;
         }
 
-        Vector2 movement = getMovementVector();
-        auto speed = player->speedStat;
-        if (IsKeyDown(KEY_LEFT_SHIFT))
+        for (auto& [name, entity] : enemyEnt)
         {
-            speed = speed / 2;
+            entity.lifetime += delta;
+            entity.movementStrategy.get()->update(entity, delta);
         }
-
-        player->velocity.x = movement.x * speed;
-        player->velocity.y = movement.y * speed;
-
-        player->trans.x += player->velocity.x * delta;
-        player->trans.y += player->velocity.y * delta;
-
-        scrollPos += scrollSpeed * delta;
+        for (auto& [name, entity] : friendlyEnt)
+        {
+            entity.lifetime += delta;
+            entity.movementStrategy.get()->update(entity, delta);
+        }
     }
 
     void onRender()
     {
         std::cout << "\x1b[2J\x1b[H";
 
-        for (auto& [name, entity] : entities)
+        std::cout << "Scroll: " << scrollPos << "\n";
+
+        for (auto& [name, entity] : friendlyEnt)
+        {
+            gfx.drawTexture(entity.textureName, entity.trans);
+            std::cout << name << ": " << entity.dump() << "\n";
+        }
+
+        for (auto& [name, entity] : enemyEnt)
         {
             gfx.drawTexture(entity.textureName, entity.trans);
             std::cout << name << ": " << entity.dump() << "\n";

@@ -18,7 +18,7 @@ endif()
 
 set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
-set(SOURCES src/main.cpp)
+set(SOURCES src/main.cpp src/MovementStrategies.cpp)
 
 set(HEADERS)
 
