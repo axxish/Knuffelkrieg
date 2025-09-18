@@ -1,37 +1,44 @@
 #pragma once
 #include <memory>
 #include <string>
+#include <utility>
 
+#include "EmittingStrategies.h"
 #include "MovementStrategies.h"
 #include "raylib.h"
 #include "raymath.h"
-
+#include "EmittingStrategies.h"
+struct GameState;
 struct Entity
 {
+
+    GameState& parent;
+
     Rectangle trans = {0, 0, 32, 32};
     std::string textureName = {"entity"};
     Vector2 velocity = {0, 0};
-    int speedStat = 320;  // for player
+    float speedStat = 320;
 
     std::shared_ptr<IMovementStrategy> movementStrategy = nullptr;
+    std::shared_ptr<IEmittingStrategy> emittingStrategy = nullptr;
 
     bool isActive = true;  // for pooling
     float lifetime = 0.0f;
 
-    std::string dump()
+    [[nodiscard]] std::string dump() const
     {
         return "Entity(" + textureName + " @ " + std::to_string(velocity.x) + "," +
                std::to_string(velocity.y) + ")";
     }
 
-    Entity() = default;
+    Entity() = delete;
 
-    Entity(Rectangle transf, std::string texName, int speed,
-           std::shared_ptr<IMovementStrategy> moveStrat)
-        : trans(transf),
-          textureName(texName),
-          speedStat(speed),
-          movementStrategy(moveStrat)
+    Entity(GameState& parent , const Rectangle transf, std::string  texName, const float speed,
+           const std::shared_ptr<IMovementStrategy> &moveStrat, const Vector2 velocity = {0, 100})
+        : parent(parent),
+          trans(transf),
+          textureName(std::move(texName)),
+          velocity(velocity), speedStat(speed), movementStrategy(moveStrat)
     {
     }
 };

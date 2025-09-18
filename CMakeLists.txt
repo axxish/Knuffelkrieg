@@ -18,9 +18,21 @@ endif()
 
 set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
-set(SOURCES src/main.cpp src/MovementStrategies.cpp)
+set(SOURCES src/main.cpp src/MovementStrategies.cpp
+        src/EmittingStrategies.cpp
+        src/EmittingStrategies.h
+        src/GameState.cpp
+        src/GameState.h
+        src/Graphics.cpp
+        src/Graphics.h)
 
-set(HEADERS)
+set(HEADERS
+        src/EmittingStrategies.cpp
+        src/EmittingStrategies.h
+        src/GameState.cpp
+        src/GameState.h
+        src/Graphics.cpp
+        src/Graphics.h)
 
 add_executable(Knuffelkrieg ${SOURCES} ${HEADERS})
 
