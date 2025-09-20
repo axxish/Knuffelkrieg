@@ -2,24 +2,23 @@
 // Created by axxy on 18.09.2025.
 //
 
-#include "GameState.h"
-
 #include <iostream>
 #include <memory>
 
 #include "EmittingStrategies.h"
 #include "Entity.h"
+#include "LevelState.h"
 #include "MovementStrategies.h"
 #include "raylib.h"
 
-Entity& GameState::addEntity(Rectangle trans, const std::string& texName,
+Entity& LevelState::addEntity(Rectangle trans, const std::string& texName,
                           const std::shared_ptr<IMovementStrategy> &moveStrat, float speedTarget,
                           Vector2 velocity)
 {
     return entities.emplace_back(*this, trans, texName, speedTarget, moveStrat, velocity);
 
 }
-void GameState::onInit()
+void LevelState::onInit()
 {
     const int screenWidth = GetRenderWidth();
     const int screenHeight = GetRenderHeight();
@@ -30,6 +29,8 @@ void GameState::onInit()
     player.trans.y = static_cast<float>(screenHeight) - player.trans.height - 20;
 
     player.emittingStrategy = std::make_shared<PlayerEmittingStrategy>();
+
+    playerIndex = entities.size()-1;
 
     std::vector<MovementPhase> phaseList;
 
@@ -52,7 +53,7 @@ void GameState::onInit()
                                          std::make_shared<SineMovement>(20, 10, 0, Vector2{0, 1}),
                                          Vector2{150, 0}));
 }
-Vector2 GameState::getMovementVector()
+Vector2 LevelState::getMovementVector()
 {
     Vector2 movement;
     movement.x = 0;
@@ -67,33 +68,31 @@ Vector2 GameState::getMovementVector()
         movement.x += 1;
     return Vector2Normalize(movement);
 }
-void GameState::onUpdate()
+void LevelState::onUpdate()
 {
     const float delta = GetFrameTime();
 
-    const auto playerIt = friendlyEnt.find("player");
-    Entity *player = nullptr;
-    if (playerIt != friendlyEnt.end())
-    {
-        player = &playerIt->second;
-    }
 
-    if (player)
+
+    if (playerIndex != -1)
     {
+        auto& player = entities[playerIndex];
+
+
         auto [x, y] = getMovementVector();
-        auto speed = player->speedTarget;
+        auto speed = player.speedTarget;
         if (IsKeyDown(KEY_LEFT_SHIFT))
         {
             speed = speed / 2;
         }
 
-        player->velocity.x = x * static_cast<float>(speed);
-        player->velocity.y = y * static_cast<float>(speed);
+        player.velocity.x = x * static_cast<float>(speed);
+        player.velocity.y = y * static_cast<float>(speed);
 
         scrollPos += delta;
     }
 
-    for (auto &[name, entity] : entities)
+    for (auto &entity : entities)
     {
         entity.lifetime += delta;
         if (entity.movementStrategy != nullptr)
@@ -105,27 +104,16 @@ void GameState::onUpdate()
             entity.emittingStrategy->update(entity, delta);
         }
     }
-    for (auto &[name, entity] : friendlyEnt)
-    {
-        entity.lifetime += delta;
-        entity.movementStrategy->update(entity, delta);
-        if (entity.emittingStrategy != nullptr)
-        {
-            entity.emittingStrategy->update(entity, delta);
-        }
-    }
+
 }
-void GameState::onRender()
+void LevelState::onRender()
 {
     // std::cout << "\x1b[2J\x1b[H";
 
-    for (auto &[name, entity] : friendlyEnt)
+    for (const auto& entity : entities)
     {
         gfx.drawTexture(entity.textureName, entity.trans);
     }
 
-    for (auto &[name, entity] : entities)
-    {
-        gfx.drawTexture(entity.textureName, entity.trans);
-    }
+
 }

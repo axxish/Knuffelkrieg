@@ -24,7 +24,7 @@ void SineMovement::update(Entity& entity, const float deltaTime)
     const Vector2 base_direction = Vector2Normalize(entity.velocity);
 
 
-    auto [x, y] = Vector2Scale(base_direction, entity.speedStat);
+    auto [x, y] = Vector2Scale(base_direction, entity.speedTarget);
 
 
     const float lateral_speed = amplitude * frequency * cos(entity.lifetime * frequency + phase);
@@ -50,7 +50,7 @@ void TargetPlayerMovement::update(Entity& entity, float deltaTime)
         isInitialized = true;
     }
 
-    entity.velocity = Vector2Scale(direction, entity.speedStat);
+    entity.velocity = Vector2Scale(direction, entity.speedTarget);
 
     entity.trans.x += entity.velocity.x * deltaTime;
     entity.trans.y += entity.velocity.y * deltaTime;
@@ -80,7 +80,7 @@ void MoveToPoint::update(Entity &entity, const float deltaTime) {
     // Calculate how far we will move this frame.
 
     // Check if we will reach or overshoot the target this frame.
-    if (const float moveDistanceThisFrame = entity.speedStat * deltaTime; distanceToTarget <= moveDistanceThisFrame)
+    if (const float moveDistanceThisFrame = entity.speedTarget * deltaTime; distanceToTarget <= moveDistanceThisFrame)
     {
         // We have arrived. Snap the position directly to the destination
         // to prevent overshooting, and set the flag.
@@ -91,7 +91,7 @@ void MoveToPoint::update(Entity &entity, const float deltaTime) {
     else
     {
         // We are not there yet, so continue moving.
-        auto [x, y] = Vector2Scale(direction, entity.speedStat);
+        auto [x, y] = Vector2Scale(direction, entity.speedTarget);
         entity.trans.x += x * deltaTime;
         entity.trans.y += y * deltaTime;
     }
@@ -111,7 +111,7 @@ void ChainedMovement::update(Entity &entity, const float deltaTime) {
 
     // --- On the first frame of a new phase, set the entity's state ---
     if (timeInCurrentPhase == 0.0f) {
-        entity.speedStat = phases[currentPhaseIndex].newSpeedStat;
+        entity.speedTarget = phases[currentPhaseIndex].newSpeedStat;
     }
 
     // Get the current phase and its strategy.
@@ -132,7 +132,7 @@ void ChainedMovement::update(Entity &entity, const float deltaTime) {
 
         // If there's a next phase, immediately set its speed.
         if (currentPhaseIndex < phases.size()) {
-            entity.speedStat = phases[currentPhaseIndex].newSpeedStat;
+            entity.speedTarget = phases[currentPhaseIndex].newSpeedStat;
         }
     }
 }

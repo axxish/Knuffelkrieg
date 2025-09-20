@@ -3,11 +3,9 @@
 #include <unordered_map>
 
 #include "Entity.h"
-
+#include "LevelState.h"
 #include "raylib.h"
 #include "raymath.h"
-#include "GameState.h"
-
 
 int main()
 {
@@ -15,7 +13,7 @@ int main()
     constexpr int screenHeight = 800;
     InitWindow(screenWidth, screenHeight, "Knuffelkrieg");
     SetTargetFPS(144);
-    GameState state;
+    LevelState state;
     state.onInit();
     state.gfx.loadTexture("res/player.png");
     while (!WindowShouldClose())

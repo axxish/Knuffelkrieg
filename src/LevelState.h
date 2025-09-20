@@ -13,7 +13,7 @@ class IEmittingStrategy;
 struct Entity;
 
 
-struct GameState
+struct LevelState
 {
     Graphics gfx;
 
@@ -22,7 +22,7 @@ struct GameState
     Entity& addEntity(Rectangle trans, const std::string&  texName,
            const std::shared_ptr<IMovementStrategy> &moveStrat, float speedTarget= 320, Vector2 velocity = {0, 100});
 
-    double scrollPos = 0.0f;
+
 
     void onInit();
 
@@ -31,4 +31,9 @@ struct GameState
     void onUpdate();
 
     void onRender();
+
+private:
+    double scrollPos = 0.0f;
+    int playerIndex = -1;
+    int bossIndex = -1;
 };
