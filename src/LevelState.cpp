@@ -3,22 +3,29 @@
 //
 
 #include "GameState.h"
-#include "raylib.h"
-#include <iostream>
 
-#include "MovementStrategies.h"
-#include "Entity.h"
+#include <iostream>
 #include <memory>
+
 #include "EmittingStrategies.h"
+#include "Entity.h"
+#include "MovementStrategies.h"
+#include "raylib.h"
+
+Entity& GameState::addEntity(Rectangle trans, const std::string& texName,
+                          const std::shared_ptr<IMovementStrategy> &moveStrat, float speedTarget,
+                          Vector2 velocity)
+{
+    return entities.emplace_back(*this, trans, texName, speedTarget, moveStrat, velocity);
+
+}
 void GameState::onInit()
 {
     const int screenWidth = GetRenderWidth();
     const int screenHeight = GetRenderHeight();
 
-    friendlyEnt.insert({"player", Entity(*this, {0, 0, 124, 135}, "res/player.png", 320,
-                                         std::make_shared<LinearMovement>())});
+    auto &player = addEntity({0, 0, 124, 135}, "res/player.png", std::make_shared<LinearMovement>(), 320, {0, 0});
 
-    auto &player = friendlyEnt.find("player")->second;
     player.trans.x = static_cast<float>(screenWidth) / 2 - player.trans.width / 2;
     player.trans.y = static_cast<float>(screenHeight) - player.trans.height - 20;
 
@@ -37,13 +44,13 @@ void GameState::onInit()
 
     phaseList.push_back({std::make_unique<LinearMovement>(), 2.0f, 300});
 
-    enemyEnt.insert({"asteroid1", Entity(*this, {200, -50, 96, 96}, "res/aster.png", 100,
+    entities.push_back(Entity(*this, {200, -50, 96, 96}, "res/aster.png", 100,
                                          std::make_shared<ChainedMovement>(std::move(phaseList)),
-                                         Vector2{0, 150})});
+                                         Vector2{0, 150}));
 
-    enemyEnt.insert({"asteroid2", Entity(*this, {200, 100, 96, 96}, "res/aster.png", 100,
+    entities.push_back(Entity(*this, {200, 100, 96, 96}, "res/aster.png", 100,
                                          std::make_shared<SineMovement>(20, 10, 0, Vector2{0, 1}),
-                                         Vector2{150, 0})});
+                                         Vector2{150, 0}));
 }
 Vector2 GameState::getMovementVector()
 {
@@ -74,7 +81,7 @@ void GameState::onUpdate()
     if (player)
     {
         auto [x, y] = getMovementVector();
-        auto speed = player->speedStat;
+        auto speed = player->speedTarget;
         if (IsKeyDown(KEY_LEFT_SHIFT))
         {
             speed = speed / 2;
@@ -86,7 +93,7 @@ void GameState::onUpdate()
         scrollPos += delta;
     }
 
-    for (auto &[name, entity] : enemyEnt)
+    for (auto &[name, entity] : entities)
     {
         entity.lifetime += delta;
         if (entity.movementStrategy != nullptr)
@@ -105,23 +112,20 @@ void GameState::onUpdate()
         if (entity.emittingStrategy != nullptr)
         {
             entity.emittingStrategy->update(entity, delta);
-
         }
     }
 }
 void GameState::onRender()
 {
-    //std::cout << "\x1b[2J\x1b[H";
+    // std::cout << "\x1b[2J\x1b[H";
 
     for (auto &[name, entity] : friendlyEnt)
     {
         gfx.drawTexture(entity.textureName, entity.trans);
-        //std::cout << name << ": " << entity.dump() << "\n";
     }
 
-    for (auto &[name, entity] : enemyEnt)
+    for (auto &[name, entity] : entities)
     {
         gfx.drawTexture(entity.textureName, entity.trans);
-        //std::cout << name << ": " << entity.dump() << "\n";
     }
 }
