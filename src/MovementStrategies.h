@@ -12,6 +12,8 @@ class IMovementStrategy
     virtual ~IMovementStrategy() = default;
 
     virtual void update(Entity& entity, float deltaTime) = 0;
+
+    [[nodiscard]] virtual bool isComplete() const;
 };
 
 class LinearMovement final : public IMovementStrategy
@@ -19,6 +21,9 @@ class LinearMovement final : public IMovementStrategy
    public:
     void update(Entity& entity, float deltaTime) override;
 };
+
+
+
 
 class SineMovement final : public IMovementStrategy
 {
@@ -66,8 +71,7 @@ public:
 
     void update(Entity& entity, float deltaTime) override;
 
-    // A helper function to check if the movement is complete.
-    [[nodiscard]] bool hasReachedDestination() const;
+    [[nodiscard]] bool isComplete() const override;
 };
 
 
@@ -75,7 +79,7 @@ struct MovementPhase
 {
     std::unique_ptr<IMovementStrategy> strategy;
     float duration; // How long this phase should last in seconds.
-    float newSpeedStat; // The speed the entity should have during this phase.
+    float newSpeedTarget; // The speed the entity should have during this phase.
 };
 
 // A "super" strategy that executes a sequence of other strategies.

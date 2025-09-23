@@ -29,7 +29,10 @@ public:
 
 class PlayerEmittingStrategy final : public IEmittingStrategy
 {
+public:
+    PlayerEmittingStrategy();
 
+private:
     void emitImp(const Entity& entity, float delta) override;
 };
 

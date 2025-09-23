@@ -11,6 +11,7 @@ int main()
 {
     constexpr int screenWidth = 600;
     constexpr int screenHeight = 800;
+    SetConfigFlags(FLAG_VSYNC_HINT);
     InitWindow(screenWidth, screenHeight, "Knuffelkrieg");
     SetTargetFPS(144);
     LevelState state;
@@ -25,6 +26,7 @@ int main()
 
         state.onRender();
 
+        DrawFPS(GetScreenWidth() - 100, 20);
         EndDrawing();
     }
 

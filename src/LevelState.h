@@ -12,6 +12,8 @@ class IMovementStrategy;
 class IEmittingStrategy;
 struct Entity;
 
+constexpr int PLAYER_AREA_HEIGHT = 320;
+constexpr int PLAYER_AREA_WIDTH = 180;
 
 struct LevelState
 {
@@ -24,6 +26,10 @@ struct LevelState
 
 
 
+    Rectangle playArea = {0, 0, 480, 620 };
+    float entityCullGracePeriod = 200; //in Pixels
+    Rectangle cullingArea = {-playArea.width/2 - entityCullGracePeriod, -playArea.height /2 - entityCullGracePeriod,
+        playArea.width + entityCullGracePeriod, playArea.height + entityCullGracePeriod};
     void onInit();
 
     static Vector2 getMovementVector();
@@ -33,7 +39,11 @@ struct LevelState
     void onRender();
 
 private:
+    Camera2D camera = {{}};
     double scrollPos = 0.0f;
+    RenderTexture2D playerAreaRenderTexture = {0};
     int playerIndex = -1;
     int bossIndex = -1;
+    const float loggerCooldown = 0.5f;
+    float loggerTimer = 0;
 };

@@ -8,9 +8,9 @@ find_package(raylib 5.5 QUIET)
 include(FetchContent)
 if(NOT raylib_FOUND)
     FetchContent_Declare(
-        raylib
-        URL https://github.com/raysan5/raylib/archive/refs/tags/5.5.tar.gz
-        DOWNLOAD_EXTRACT_TIMESTAMP True #This option is not required but suppresses a warning
+            raylib
+            URL https://github.com/raysan5/raylib/archive/refs/tags/5.5.tar.gz
+            DOWNLOAD_EXTRACT_TIMESTAMP True #This option is not required but suppresses a warning
     )
     FetchContent_MakeAvailable(raylib)
 endif()
@@ -32,7 +32,8 @@ set(HEADERS
         src/LevelState.cpp
         src/LevelState.h
         src/Graphics.cpp
-        src/Graphics.h)
+        src/Graphics.h
+        src/colourDefs.h)
 
 add_executable(Knuffelkrieg ${SOURCES} ${HEADERS})
 
@@ -44,8 +45,8 @@ target_include_directories(Knuffelkrieg PUBLIC "${raylib_SOURCE_DIR}/src")
 
 
 add_custom_command(
-    TARGET Knuffelkrieg POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-    "${CMAKE_SOURCE_DIR}/res" "$<TARGET_FILE_DIR:Knuffelkrieg>/res"
+        TARGET Knuffelkrieg POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/res" "$<TARGET_FILE_DIR:Knuffelkrieg>/res"
 )
 

@@ -3,12 +3,17 @@
 
 #include "Entity.h"
 
+bool IMovementStrategy::isComplete() const {
+    return false;
+}
+
 void LinearMovement::update(Entity& entity, float deltaTime)
 {
 
     entity.trans.x += entity.velocity.x * deltaTime;
     entity.trans.y += entity.velocity.y * deltaTime;
 }
+
 
 SineMovement::SineMovement(const float amp, const float freq, const float phaseShift, Vector2 waveAxis)
     : waveAxis(waveAxis), amplitude(amp), frequency(freq), phase(phaseShift)
@@ -64,7 +69,6 @@ void MoveToPoint::update(Entity &entity, const float deltaTime) {
         return;
     }
 
-
     if (!isInitialized)
     {
         const Vector2 startPos = {entity.trans.x, entity.trans.y};
@@ -97,42 +101,56 @@ void MoveToPoint::update(Entity &entity, const float deltaTime) {
     }
 }
 
-bool MoveToPoint::hasReachedDestination() const {
+
+bool MoveToPoint::isComplete() const {
     return hasArrived;
 }
 
 ChainedMovement::ChainedMovement(std::vector<MovementPhase> &&phaseList): phases(std::move(phaseList)), currentPhaseIndex(0), timeInCurrentPhase(0.0f) {}
-
-void ChainedMovement::update(Entity &entity, const float deltaTime) {
-    // If the entire sequence is finished, do nothing.
+void ChainedMovement::update(Entity& entity, const float deltaTime)
+{
     if (currentPhaseIndex >= phases.size()) {
         return;
     }
 
-    // --- On the first frame of a new phase, set the entity's state ---
     if (timeInCurrentPhase == 0.0f) {
-        entity.speedTarget = phases[currentPhaseIndex].newSpeedStat;
+        entity.speedTarget = phases[currentPhaseIndex].newSpeedTarget;
     }
 
-    // Get the current phase and its strategy.
     const MovementPhase& currentPhase = phases[currentPhaseIndex];
+    IMovementStrategy* currentStrategy = currentPhase.strategy.get();
 
-    // Update the entity using the current phase's strategy.
-    if (IMovementStrategy* currentStrategy = currentPhase.strategy.get()) {
+    if (currentStrategy) {
         currentStrategy->update(entity, deltaTime);
     }
 
-    // Increment the timer for the current phase.
     timeInCurrentPhase += deltaTime;
 
-    // --- Check for transition to the next phase ---
-    if (timeInCurrentPhase >= currentPhase.duration) {
-        currentPhaseIndex++;
-        timeInCurrentPhase = 0.0f; // Reset the timer for the next phase.
+    // --- NEW, HIERARCHICAL TRANSITION LOGIC ---
+    bool transition = false;
 
-        // If there's a next phase, immediately set its speed.
+    // Rule 1: Check duration first, if it's specified.
+    if (currentPhase.duration > 0.0f)
+    {
+        if (timeInCurrentPhase >= currentPhase.duration) {
+            transition = true;
+        }
+    }
+    // Rule 2: If duration is not specified (<= 0), check for completion.
+    else
+    {
+        if (currentStrategy && currentStrategy->isComplete()) {
+            transition = true;
+        }
+    }
+
+    if (transition) {
+        currentPhaseIndex++;
+        timeInCurrentPhase = 0.0f;
+
         if (currentPhaseIndex < phases.size()) {
-            entity.speedTarget = phases[currentPhaseIndex].newSpeedStat;
+            entity.speedTarget = phases[currentPhaseIndex].newSpeedTarget;
         }
     }
 }
+
