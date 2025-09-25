@@ -7,7 +7,7 @@ bool IMovementStrategy::isComplete() const {
     return false;
 }
 
-void LinearMovement::update(Entity& entity, float deltaTime)
+void LinearMovement::update(Entity& entity, const float deltaTime)
 {
 
     entity.trans.x += entity.velocity.x * deltaTime;
@@ -44,7 +44,7 @@ void SineMovement::update(Entity& entity, const float deltaTime)
     entity.trans.y += total_velocity.y * deltaTime;
 }
 
-void TargetPlayerMovement::update(Entity& entity, float deltaTime)
+void TargetPlayerMovement::update(Entity& entity, const float deltaTime)
 {
     if (!isInitialized)
     {

@@ -11,13 +11,19 @@
 struct LevelState;
 
 
+enum class EntityType {
+    player = 0, bullet = 1, enemy = 2
+};
 
 struct Entity
 {
     LevelState& parent;
 
+    EntityType type = EntityType::enemy;
+
     Rectangle trans = {0, 0, 32, 32};
     std::string textureName = {"entity"};
+    bool bloomy = false;
     Vector2 velocity = {0, 0};
     float speedTarget = 220;
 

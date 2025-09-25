@@ -1,9 +1,10 @@
 //
 // Created by axxy on 22.09.2025.
 //
+#pragma once
 
 #include "raylib.h"
 
-#pragma once
 
-inline Color SPACE_BLACK{32, 21, 51, 255};
+
+inline Color SPACE_BLACK{46, 34, 47, 255};

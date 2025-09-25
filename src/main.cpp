@@ -9,8 +9,8 @@
 
 int main()
 {
-    constexpr int screenWidth = 600;
-    constexpr int screenHeight = 800;
+    constexpr int screenWidth = 240*2;
+    constexpr int screenHeight = 320*2;
     SetConfigFlags(FLAG_VSYNC_HINT);
     InitWindow(screenWidth, screenHeight, "Knuffelkrieg");
     SetTargetFPS(144);

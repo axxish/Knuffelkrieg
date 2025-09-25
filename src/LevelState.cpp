@@ -20,16 +20,20 @@ Entity &LevelState::addEntity(Rectangle trans, const std::string &texName,
     return entities.emplace_back(*this, trans, texName, speedTarget, moveStrat, velocity);
 }
 
-void LevelState::onInit() {
-    const int screenWidth = GetRenderWidth();
-    const int screenHeight = GetRenderHeight();
 
-    playerAreaRenderTexture = LoadRenderTexture(static_cast<int>(playArea.width), static_cast<int>(playArea.height));
+
+void LevelState::onInit() {
+
+    backgroundRenderTexture = LoadRenderTexture(static_cast<int>(playArea.width), static_cast<int>(playArea.height));
+    lightRenderTexture = LoadRenderTexture(static_cast<int>(playArea.width), static_cast<int>(playArea.height));
+    entityRenderTexture = LoadRenderTexture(static_cast<int>(playArea.width), static_cast<int>(playArea.height));
+    bloomyRenderTexture = LoadRenderTexture(static_cast<int>(playArea.height), static_cast<int>(playArea.height));
+
 
     camera = {{playArea.width / 2, playArea.height / 2}, {0, 0}, 0, 1};
 
-    auto &player = addEntity({0, playArea.height / 2, 32*2, 32*2}, "res/Ship_1.png",
-                             std::make_shared<LinearMovement>(), 400, {0, 0});
+    auto &player = addEntity({0, playArea.height / 2, 32, 32}, "res/Ship_1bright.png",
+                             std::make_shared<LinearMovement>(), 220, {0, 0});
 
     player.trans.x = 0 - player.trans.width/2;
     player.trans.y = playArea.height/2 ;
@@ -37,6 +41,10 @@ void LevelState::onInit() {
     player.emittingStrategy = std::make_shared<PlayerEmittingStrategy>();
 
     playerIndex = entities.size() - 1;
+
+    gfx.loadShader("bloom", "res/bloom.frag");
+
+
 }
 
 Vector2 LevelState::getMovementVector() {
@@ -70,11 +78,12 @@ void LevelState::onUpdate() {
         }
 
         if (IsKeyDown(KEY_Z)) {
-            player.isFiring = true;
+            player
+            .isFiring = true;
         }
 
-        player.velocity.x = x * static_cast<float>(speed);
-        player.velocity.y = y * static_cast<float>(speed);
+        player.velocity.x = x * speed;
+        player.velocity.y = y * speed;
 
         scrollPos += delta;
 
@@ -107,32 +116,132 @@ void LevelState::onUpdate() {
 }
 
 void LevelState::onRender() {
-    // std::cout << "\x1b[2J\x1b[H";
 
-    BeginTextureMode(playerAreaRenderTexture);
+
+    BeginTextureMode(backgroundRenderTexture);
     ClearBackground(SPACE_BLACK);
     BeginMode2D(camera);
+    gfx.drawTexture("res/planet15.png", {-50, static_cast<float>((-100 + (scrollPos * 0.25))), 128*2, 128*2});
 
+    EndMode2D();
+    EndTextureMode();
+
+
+    BeginTextureMode(lightRenderTexture);
+    ClearBackground(BLACK);
+    BeginMode2D(camera);
+    BeginBlendMode(BLEND_ADDITIVE);
     for (const auto &entity: entities) {
-        gfx.drawTexture(entity.textureName, entity.trans);
+
+        if (entity.bloomy) {
+
+            DrawCircleGradient((entity.trans.x+entity.trans.width/2) , (entity.trans.y+entity.trans.width/2)+1,
+                entity.trans.width ,
+                {255, 255, 255, 100}, BLANK);
+            DrawCircleGradient((entity.trans.x+entity.trans.width/2) , (entity.trans.y+entity.trans.width/2)+1,
+                entity.trans.width*3,
+                {255, 255, 255, 25}, BLANK);
+            DrawCircleGradient((entity.trans.x+entity.trans.width/2) , (entity.trans.y+entity.trans.width/2)+1,
+                    entity.trans.width*5,
+                    {255, 255, 255, 5}, BLANK);
+
+        }
+        else {
+            DrawCircleGradient((entity.trans.x+entity.trans.width/2) , (entity.trans.y+entity.trans.width/2)+1,
+                (entity.trans.width*1.5 - (rand()%5)),
+                {255, 255, 255, 70}, BLANK);
+        }
+
+    }
+    EndBlendMode();
+    EndMode2D();
+    EndTextureMode();
+
+
+
+    BeginTextureMode(entityRenderTexture);
+    ClearBackground(BLANK);
+    BeginMode2D(camera);
+        for (const auto &entity: entities) {
+
+            gfx.drawTexture(entity.textureName, entity.trans);
+        }
+
+    EndMode2D();
+    EndTextureMode();
+
+    BeginTextureMode(bloomyRenderTexture);
+    ClearBackground(BLACK);
+    BeginMode2D(camera);
+    for (const auto &entity: entities) {
+        if (entity.bloomy)gfx.drawTexture(entity.textureName, entity.trans);
     }
 
     EndMode2D();
     EndTextureMode();
 
-    auto& tex = playerAreaRenderTexture.texture;
 
-    DrawTexturePro(playerAreaRenderTexture.texture, {
+
+    DrawTexturePro(backgroundRenderTexture.texture, {
                        0, 0,
-                       static_cast<float>(playerAreaRenderTexture.texture.width),
-                       -static_cast<float>(playerAreaRenderTexture.texture.height)
+                       static_cast<float>(backgroundRenderTexture.texture.width),
+                       -static_cast<float>(backgroundRenderTexture.texture.height)
                    },
                    {
-                       0, 0, static_cast<float>(playerAreaRenderTexture.texture.width),
-                       static_cast<float>(playerAreaRenderTexture.texture.height)
+                       0, 0, static_cast<float>(backgroundRenderTexture.texture.width*2),
+                       static_cast<float>(backgroundRenderTexture.texture.height*2)
+                   },
+                   {0,0}, 0, {150,150,150, 255});
+
+    BeginBlendMode(BLEND_ADDITIVE);
+    DrawTexturePro(lightRenderTexture.texture, {
+                       0, 0,
+                       static_cast<float>(backgroundRenderTexture.texture.width),
+                       -static_cast<float>(backgroundRenderTexture.texture.height)
+                   },
+                   {
+                       0, 0, static_cast<float>(backgroundRenderTexture.texture.width*2),
+                       static_cast<float>(backgroundRenderTexture.texture.height*2)
+                   },
+                   {0,0}, 0, WHITE);
+    EndBlendMode();
+
+    DrawTexturePro(entityRenderTexture.texture, {
+                    -2, -2,
+                    static_cast<float>(backgroundRenderTexture.texture.width),
+                    -static_cast<float>(backgroundRenderTexture.texture.height)
+                },
+                {
+                    0, 0, static_cast<float>(backgroundRenderTexture.texture.width*2),
+                    static_cast<float>(backgroundRenderTexture.texture.height*2)
+                },
+                {0,0}, 0, BLACK);
+
+    DrawTexturePro(entityRenderTexture.texture, {
+                       0, 0,
+                       static_cast<float>(backgroundRenderTexture.texture.width),
+                       -static_cast<float>(backgroundRenderTexture.texture.height)
+                   },
+                   {
+                       0, 0, static_cast<float>(backgroundRenderTexture.texture.width*2),
+                       static_cast<float>(backgroundRenderTexture.texture.height*2)
                    },
                    {0,0}, 0, WHITE);
 
+    BeginShaderMode(gfx.getShader("bloom"));
+    BeginBlendMode(BLEND_ADDITIVE);
+    DrawTexturePro(bloomyRenderTexture.texture, {
+                       0, 0,
+                       static_cast<float>(backgroundRenderTexture.texture.width),
+                       -static_cast<float>(backgroundRenderTexture.texture.height)
+                   },
+                   {
+                       0, 0, static_cast<float>(backgroundRenderTexture.texture.width*2),
+                       static_cast<float>(backgroundRenderTexture.texture.height*2)
+                   },
+                   {0,0}, 0, WHITE);
+    EndBlendMode();
+    EndShaderMode();
     if (loggerTimer >= loggerCooldown) {
         std::cout << "\033[2J";
         std::cout << "culling area: " << cullingArea.x << " " << cullingArea.y << " " << cullingArea.width <<" " << cullingArea.height <<  "\n";

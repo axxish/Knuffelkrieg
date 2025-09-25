@@ -31,11 +31,11 @@ PlayerEmittingStrategy::PlayerEmittingStrategy() {
 void PlayerEmittingStrategy::emitImp(const Entity &entity, float delta)
 {
     auto& state = entity.parent;
-    state.addEntity({entity.trans.x + (3*2), entity.trans.y, 8*2, 8*2}, "res/particle_1.png",
-        std::make_shared<LinearMovement>(), 100, {0, -1000});
+    state.addEntity({entity.trans.x + (3), entity.trans.y, 8, 8}, "res/particle_1.png",
+        std::make_shared<LinearMovement>(), 100, {0, -500}).bloomy=true;
 
-    state.addEntity({entity.trans.x + entity.trans.width - (8*2) - (3*2), entity.trans.y, 8*2 ,8*2}, "res/particle_1.png",
-        std::make_shared<LinearMovement>(), 100, {0, -1000});
+    state.addEntity({entity.trans.x + entity.trans.width - (8) - (3), entity.trans.y, 8 ,8}, "res/particle_1.png",
+        std::make_shared<LinearMovement>(), 100, {0, -500}).bloomy=true;
 
 
 }

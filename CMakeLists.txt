@@ -44,9 +44,24 @@ set_property(TARGET Knuffelkrieg PROPERTY CXX_STANDARD 20)
 target_include_directories(Knuffelkrieg PUBLIC "${raylib_SOURCE_DIR}/src")
 
 
+set(RESOURCE_SOURCE_DIR "${CMAKE_SOURCE_DIR}/res")
+set(RESOURCE_DEST_DIR "$<TARGET_FILE_DIR:Knuffelkrieg>/res")
+set(RESOURCE_STAMP_FILE "${CMAKE_CURRENT_BINARY_DIR}/resource_stamp")
+
 add_custom_command(
-        TARGET Knuffelkrieg POST_BUILD
+        OUTPUT ${RESOURCE_STAMP_FILE}
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${CMAKE_SOURCE_DIR}/res" "$<TARGET_FILE_DIR:Knuffelkrieg>/res"
+        "${RESOURCE_SOURCE_DIR}"
+        "${RESOURCE_DEST_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E touch "${RESOURCE_STAMP_FILE}"
+        DEPENDS ${RESOURCE_SOURCE_DIR}
+        COMMENT "Syncing resources to build directory..."
 )
 
+
+add_custom_target(SyncResources ALL
+        DEPENDS ${RESOURCE_STAMP_FILE}
+)
+
+
+add_dependencies(Knuffelkrieg SyncResources)
