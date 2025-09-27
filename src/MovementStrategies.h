@@ -22,9 +22,6 @@ class LinearMovement final : public IMovementStrategy
     void update(Entity& entity, float deltaTime) override;
 };
 
-
-
-
 class SineMovement final : public IMovementStrategy
 {
    public:

@@ -7,7 +7,10 @@
 #include <iostream>
 
 void Graphics::loadTexture(const std::string &name) {
-    textures[name] = LoadTexture(name.c_str());
+    if (!textures.contains(name)) {
+        textures[name] = LoadTexture(name.c_str());
+    }
+
 }
 
 Texture2D &Graphics::getTexture(const std::string &name) {

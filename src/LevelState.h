@@ -49,4 +49,6 @@ private:
 
     const float loggerCooldown = 0.5f;
     float loggerTimer = 0;
+
+    const float playerClampAllowance = 10;
 };

@@ -15,6 +15,8 @@ enum class EntityType {
     player = 0, bullet = 1, enemy = 2
 };
 
+
+
 struct Entity
 {
     LevelState& parent;

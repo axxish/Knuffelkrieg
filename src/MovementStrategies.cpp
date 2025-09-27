@@ -15,6 +15,7 @@ void LinearMovement::update(Entity& entity, const float deltaTime)
 }
 
 
+
 SineMovement::SineMovement(const float amp, const float freq, const float phaseShift, Vector2 waveAxis)
     : waveAxis(waveAxis), amplitude(amp), frequency(freq), phase(phaseShift)
 {

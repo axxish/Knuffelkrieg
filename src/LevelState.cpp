@@ -32,11 +32,11 @@ void LevelState::onInit() {
 
     camera = {{playArea.width / 2, playArea.height / 2}, {0, 0}, 0, 1};
 
-    auto &player = addEntity({0, playArea.height / 2, 32, 32}, "res/Ship_1bright.png",
+    auto &player = addEntity({0, 0, 32, 32}, "res/playerShipStatic.png",
                              std::make_shared<LinearMovement>(), 220, {0, 0});
 
     player.trans.x = 0 - player.trans.width/2;
-    player.trans.y = playArea.height/2 ;
+    player.trans.y = playArea.height/2 - player.trans.height - 20 ;
 
     player.emittingStrategy = std::make_shared<PlayerEmittingStrategy>();
 
@@ -86,9 +86,9 @@ void LevelState::onUpdate() {
         player.velocity.y = y * speed;
 
         scrollPos += delta;
-
-
     }
+
+
 
 
 
@@ -107,6 +107,18 @@ void LevelState::onUpdate() {
         }
     }
 
+    if (playerIndex!=-1) {
+        auto& player = entities[playerIndex];
+
+
+        if ((player.trans.x + player.trans.width)> playArea.width/2 + playerClampAllowance)
+            player.trans.x = (playArea.width/2+playerClampAllowance) - player.trans.width;
+        if (player.trans.x < -playArea.width/2 -playerClampAllowance) player.trans.x = -playArea.width/2 - playerClampAllowance;
+        if (player.trans.y<-playArea.height/2-playerClampAllowance) player.trans.y = -playArea.height/2 - playerClampAllowance;
+        if ((player.trans.y + player.trans.height)> playArea.height/2 + playerClampAllowance)
+            player.trans.y = (playArea.height/2 + playerClampAllowance) - player.trans.height;
+    }
+
     for (unsigned int i = entities.size()-1; i > 0; i--) {
         if (entities[i].flaggedForRemoval) {
             entities[i] = std::move(entities.back());
@@ -121,7 +133,11 @@ void LevelState::onRender() {
     BeginTextureMode(backgroundRenderTexture);
     ClearBackground(SPACE_BLACK);
     BeginMode2D(camera);
-    gfx.drawTexture("res/planet15.png", {-50, static_cast<float>((-100 + (scrollPos * 0.25))), 128*2, 128*2});
+
+    gfx.drawTexture("res/parallax-background.png", {-playArea.width/2, -playArea.height/2, playArea.width, playArea.height});
+    gfx.drawTexture("res/parallaxstars.png", {-playArea.width/2, (float)((-playArea.height/2) + (scrollPos * 0.1)), playArea.width, playArea.height});
+
+    gfx.drawTexture("res/planet15.png", {-50, static_cast<float>((-200 + (scrollPos * 0.5))), 128*2, 128*2});
 
     EndMode2D();
     EndTextureMode();
@@ -163,8 +179,10 @@ void LevelState::onRender() {
     ClearBackground(BLANK);
     BeginMode2D(camera);
         for (const auto &entity: entities) {
-
-            gfx.drawTexture(entity.textureName, entity.trans);
+            auto entityTransform = entity.trans;
+            entityTransform.x = floor(entity.trans.x);
+            entityTransform.y = floor(entity.trans.y);
+            gfx.drawTexture(entity.textureName, entityTransform);
         }
 
     EndMode2D();
@@ -191,9 +209,9 @@ void LevelState::onRender() {
                        0, 0, static_cast<float>(backgroundRenderTexture.texture.width*2),
                        static_cast<float>(backgroundRenderTexture.texture.height*2)
                    },
-                   {0,0}, 0, {150,150,150, 255});
+                   {0,0}, 0, {250,250,250, 255});
 
-    BeginBlendMode(BLEND_ADDITIVE);
+    //BeginBlendMode(BLEND_ADDITIVE);
     DrawTexturePro(lightRenderTexture.texture, {
                        0, 0,
                        static_cast<float>(backgroundRenderTexture.texture.width),
@@ -203,9 +221,9 @@ void LevelState::onRender() {
                        0, 0, static_cast<float>(backgroundRenderTexture.texture.width*2),
                        static_cast<float>(backgroundRenderTexture.texture.height*2)
                    },
-                   {0,0}, 0, WHITE);
-    EndBlendMode();
-
+                   {0,0}, 0, {255, 255, 255, 100});
+    //EndBlendMode();
+    /*
     DrawTexturePro(entityRenderTexture.texture, {
                     -2, -2,
                     static_cast<float>(backgroundRenderTexture.texture.width),
@@ -216,7 +234,7 @@ void LevelState::onRender() {
                     static_cast<float>(backgroundRenderTexture.texture.height*2)
                 },
                 {0,0}, 0, BLACK);
-
+    */
     DrawTexturePro(entityRenderTexture.texture, {
                        0, 0,
                        static_cast<float>(backgroundRenderTexture.texture.width),
@@ -228,24 +246,11 @@ void LevelState::onRender() {
                    },
                    {0,0}, 0, WHITE);
 
-    BeginShaderMode(gfx.getShader("bloom"));
-    BeginBlendMode(BLEND_ADDITIVE);
-    DrawTexturePro(bloomyRenderTexture.texture, {
-                       0, 0,
-                       static_cast<float>(backgroundRenderTexture.texture.width),
-                       -static_cast<float>(backgroundRenderTexture.texture.height)
-                   },
-                   {
-                       0, 0, static_cast<float>(backgroundRenderTexture.texture.width*2),
-                       static_cast<float>(backgroundRenderTexture.texture.height*2)
-                   },
-                   {0,0}, 0, WHITE);
-    EndBlendMode();
-    EndShaderMode();
-    if (loggerTimer >= loggerCooldown) {
+
+    /*if (loggerTimer >= loggerCooldown) {
         std::cout << "\033[2J";
         std::cout << "culling area: " << cullingArea.x << " " << cullingArea.y << " " << cullingArea.width <<" " << cullingArea.height <<  "\n";
         std::cout << "entity count : " << entities.size() << std::endl;
         loggerTimer = 0;
-    }
+    }*/
 }

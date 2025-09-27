@@ -7,4 +7,4 @@
 
 
 
-inline Color SPACE_BLACK{46, 34, 47, 255};
+inline Color SPACE_BLACK{17, 17, 17, 255};
