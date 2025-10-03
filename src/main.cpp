@@ -16,7 +16,8 @@ int main()
     SetTargetFPS(144);
     LevelState state;
     state.onInit();
-    state.gfx.loadTexture("res/player.png");
+    state.gfx.loadSpriteSheet("res/particle_2.png");
+
     while (!WindowShouldClose())
     {
         state.onUpdate();

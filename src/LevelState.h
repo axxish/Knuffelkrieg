@@ -1,10 +1,11 @@
 #pragma once
+#include <functional>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
-#include "Graphics.h"
+#include "ResourceLoader.h"
 #include "raylib.h"
 #include "raymath.h"
 
@@ -18,7 +19,9 @@ constexpr int PLAYER_AREA_WIDTH = 240;
 struct LevelState
 {
 
-    Graphics gfx;
+
+
+    ResourceLoader gfx;
 
     std::vector<Entity> entities;
 
@@ -44,11 +47,13 @@ private:
     RenderTexture2D lightRenderTexture = {0};
     RenderTexture2D entityRenderTexture = {0};
     RenderTexture2D bloomyRenderTexture = {0};
-    int playerIndex = -1;
+
     int bossIndex = -1;
 
+    std::vector<Entity> spawnQueue; // dirty hack to avoid losing references when u spawn an entity
     const float loggerCooldown = 0.5f;
     float loggerTimer = 0;
+    int findPlayer() const;
 
     const float playerClampAllowance = 10;
 };

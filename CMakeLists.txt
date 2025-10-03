@@ -23,17 +23,19 @@ set(SOURCES src/main.cpp src/MovementStrategies.cpp
         src/EmittingStrategies.h
         src/LevelState.cpp
         src/LevelState.h
-        src/Graphics.cpp
-        src/Graphics.h)
+        src/ResourceLoader.cpp
+        src/ResourceLoader.h
+  )
 
 set(HEADERS
         src/EmittingStrategies.cpp
         src/EmittingStrategies.h
         src/LevelState.cpp
         src/LevelState.h
-        src/Graphics.cpp
-        src/Graphics.h
-        src/colourDefs.h)
+        src/ResourceLoader.cpp
+        src/ResourceLoader.h
+        src/colourDefs.h
+ )
 
 add_executable(Knuffelkrieg ${SOURCES} ${HEADERS})
 

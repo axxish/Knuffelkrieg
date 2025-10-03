@@ -17,7 +17,9 @@
 Entity &LevelState::addEntity(Rectangle trans, const std::string &texName,
                               const std::shared_ptr<IMovementStrategy> &moveStrat, float speedTarget,
                               Vector2 velocity) {
-    return entities.emplace_back(*this, trans, texName, speedTarget, moveStrat, velocity);
+
+
+    return spawnQueue.emplace_back(*this, trans, texName, speedTarget, moveStrat, velocity);
 }
 
 
@@ -39,8 +41,8 @@ void LevelState::onInit() {
     player.trans.y = playArea.height/2 - player.trans.height - 20 ;
 
     player.emittingStrategy = std::make_shared<PlayerEmittingStrategy>();
+    player.isPlayer = true;
 
-    playerIndex = entities.size() - 1;
 
     gfx.loadShader("bloom", "res/bloom.frag");
 
@@ -65,6 +67,17 @@ Vector2 LevelState::getMovementVector() {
 void LevelState::onUpdate() {
     const float delta = GetFrameTime();
     loggerTimer += delta;
+
+
+    if (entities.empty() && spawnQueue.empty()) return;
+
+    for (auto &e : spawnQueue) {
+        entities.emplace_back(e);
+    }
+
+    spawnQueue.clear();
+
+    const int playerIndex = findPlayer();
 
     if (playerIndex != -1) {
 
@@ -92,20 +105,6 @@ void LevelState::onUpdate() {
 
 
 
-    for (auto & entity : entities) {
-        //culling logic
-        if (!CheckCollisionRecs(cullingArea, entity.trans)) {
-            entity.flaggedForRemoval = true;
-        }
-
-        entity.lifetime += delta;
-        if (entity.movementStrategy != nullptr) {
-            entity.movementStrategy->update(entity, delta);
-        }
-        if (entity.emittingStrategy != nullptr && entity.isFiring) {
-            entity.emittingStrategy->update(entity, delta);
-        }
-    }
 
     if (playerIndex!=-1) {
         auto& player = entities[playerIndex];
@@ -119,12 +118,31 @@ void LevelState::onUpdate() {
             player.trans.y = (playArea.height/2 + playerClampAllowance) - player.trans.height;
     }
 
+
     for (unsigned int i = entities.size()-1; i > 0; i--) {
         if (entities[i].flaggedForRemoval) {
             entities[i] = std::move(entities.back());
             entities.pop_back();
         }
     }
+
+    for (int i = entities.size() - 1; i >= 0; --i) {
+
+        auto &entity = entities[i];
+        //culling logic
+        if (!CheckCollisionRecs(cullingArea, entity.trans)) {
+            entity.flaggedForRemoval = true;
+        }
+        if (entity.emittingStrategy != nullptr && entity.isFiring) {
+            entity.emittingStrategy->update(entity, delta);
+        }
+        entity.lifetime += delta;
+        if (entity.movementStrategy != nullptr) {
+            entity.movementStrategy->update(entity, delta);
+        }
+    }
+
+
 }
 
 void LevelState::onRender() {
@@ -153,19 +171,19 @@ void LevelState::onRender() {
 
             DrawCircleGradient((entity.trans.x+entity.trans.width/2) , (entity.trans.y+entity.trans.width/2)+1,
                 entity.trans.width ,
-                {255, 255, 255, 100}, BLANK);
+                {255, 255, 255, 150}, BLANK);
             DrawCircleGradient((entity.trans.x+entity.trans.width/2) , (entity.trans.y+entity.trans.width/2)+1,
                 entity.trans.width*3,
-                {255, 255, 255, 25}, BLANK);
+                {255, 255, 255, 50}, BLANK);
             DrawCircleGradient((entity.trans.x+entity.trans.width/2) , (entity.trans.y+entity.trans.width/2)+1,
                     entity.trans.width*5,
-                    {255, 255, 255, 5}, BLANK);
+                    {255, 255, 255, 10}, BLANK);
 
         }
         else {
             DrawCircleGradient((entity.trans.x+entity.trans.width/2) , (entity.trans.y+entity.trans.width/2)+1,
                 (entity.trans.width*1.5 - (rand()%5)),
-                {255, 255, 255, 70}, BLANK);
+                {255, 255, 255, 40}, BLANK);
         }
 
     }
@@ -179,6 +197,7 @@ void LevelState::onRender() {
     ClearBackground(BLANK);
     BeginMode2D(camera);
         for (const auto &entity: entities) {
+
             auto entityTransform = entity.trans;
             entityTransform.x = floor(entity.trans.x);
             entityTransform.y = floor(entity.trans.y);
@@ -221,7 +240,7 @@ void LevelState::onRender() {
                        0, 0, static_cast<float>(backgroundRenderTexture.texture.width*2),
                        static_cast<float>(backgroundRenderTexture.texture.height*2)
                    },
-                   {0,0}, 0, {255, 255, 255, 100});
+                   {0,0}, 0, {255, 255, 255, 150});
     //EndBlendMode();
     /*
     DrawTexturePro(entityRenderTexture.texture, {
@@ -253,4 +272,13 @@ void LevelState::onRender() {
         std::cout << "entity count : " << entities.size() << std::endl;
         loggerTimer = 0;
     }*/
+}
+
+int LevelState::findPlayer() const {
+    for (int i = 0; i < entities.size(); i++) {
+        if (entities[i].isPlayer) {
+            return i;
+        }
+    }
+    return -1;
 }

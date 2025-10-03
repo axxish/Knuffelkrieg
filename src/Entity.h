@@ -8,6 +8,7 @@
 #include "raylib.h"
 #include "raymath.h"
 #include "EmittingStrategies.h"
+#include "ResourceLoader.h"
 struct LevelState;
 
 
@@ -24,15 +25,17 @@ struct Entity
     EntityType type = EntityType::enemy;
 
     Rectangle trans = {0, 0, 32, 32};
-    std::string textureName = {"entity"};
+    std::string textureName = {"entity"}; // to do: be replaced with Animator
     bool bloomy = false;
     Vector2 velocity = {0, 0};
     float speedTarget = 220;
 
     std::shared_ptr<IMovementStrategy> movementStrategy = nullptr;
     std::shared_ptr<IEmittingStrategy> emittingStrategy = nullptr;
+    std::shared_ptr<Animator> animator = nullptr;
     bool flaggedForRemoval = false;
     bool isFiring = true;
+    bool isPlayer = false;
 
     float lifetime = 0.0f;
 
@@ -52,11 +55,12 @@ struct Entity
            const std::shared_ptr<IMovementStrategy>& moveStrat, const Vector2 vel = {0, 100})
         : parent(parent_ref),
           trans(rect),
-          textureName(std::move(texName)), // Always move from a by-value parameter
+          textureName(std::move(texName)),
           velocity(vel),
           speedTarget(speed),
           movementStrategy(moveStrat)
     {
+        std::cout << "Create entity at " << trans.x << ", " << trans.y << "\n";
     }
 
     Entity& operator=(Entity&& other) noexcept
@@ -65,13 +69,6 @@ struct Entity
         if (this == &other) {
             return *this;
         }
-
-        // NOTE: The reference member 'parent' cannot be reseated.
-        // It will retain its original reference. This is a fundamental
-        // property of references in C++. If you must assign between
-        // entities, you must ensure they share the same parent context.
-        // You could add an assert here if that's an invariant:
-        // assert(&parent == &other.parent);
 
         trans = other.trans;
         textureName = std::move(other.textureName);
@@ -85,6 +82,7 @@ struct Entity
 
         return *this;
     }
+
 
 
     Entity(const Entity& other) = default;
